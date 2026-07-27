@@ -48,7 +48,7 @@ func (r *messageRepository) GetAll(ctx context.Context, filter model.MessageFilt
 	query := r.db.WithContext(ctx).Model(&model.Message{})
 	if filter.Query != nil && *filter.Query != "" {
         like := "%" + *filter.Query + "%"
-        query = query.Where("subject ILIKE ? OR user_id IN (SELECT id FROM users WHERE name ILIKE ?)", like, like)
+        query = query.Where("subject ILIKE ? OR (type = ? AND user_id IN (SELECT id FROM users WHERE name ILIKE ?))", like, model.TypeInnovation, like)
     }
 
 	if filter.Type != nil { query = query.Where("type = ?", *filter.Type) }
