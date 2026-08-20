@@ -4,22 +4,25 @@ import (
 	"os"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
 
 // Config Structs
 type Config struct {
-	App 	 *App
+	App      *App
 	Postgres *Postgres
 	Defaults *Defaults
-	JWT 	 *JWT
+	JWT      *JWT
 }
 
 // App Config
 type App struct {
-	Port   string
-	Domain string
+	Port           string
+	CookieDomain   string
+	AllowedOrigins []string
+	CookieSecure   bool
 }
 
 // Postgres Config
@@ -50,11 +53,15 @@ type JWT struct {
 
 func LoadConfig() *Config {
 	err := godotenv.Load()
-	if err != nil { log.Println("Error loading .env file:", err) }
+	if err != nil {
+		log.Println("Error loading .env file:", err)
+	}
 
 	app := App{
-		Port:   getEnv("APP_PORT"),
-		Domain: getEnv("APP_DOMAIN"),
+		Port:           getEnv("APP_PORT"),
+		CookieDomain:   getEnv("APP_COOKIE_DOMAIN"),
+		AllowedOrigins: getEnvList("APP_ALLOWED_ORIGINS"),
+		CookieSecure:   getEnvBool("APP_COOKIE_SECURE"),
 	}
 
 	defaults := Defaults{
@@ -73,18 +80,18 @@ func LoadConfig() *Config {
 	jwt := JWT{
 		Secret:        []byte(getEnv("JWT_SECRET")),
 		Issuer:        getEnv("JWT_ISSUER"),
-		AccessExpiry:  getEnvInt("JWT_ACCESS_EXPIRY"), // In minutes
+		AccessExpiry:  getEnvInt("JWT_ACCESS_EXPIRY"),  // In minutes
 		RefreshExpiry: getEnvInt("JWT_REFRESH_EXPIRY"), // In hours
 
-		AccessMaxAge:  getEnvInt("JWT_ACCESS_EXPIRY") * 60, // Convert minutes to seconds
+		AccessMaxAge:  getEnvInt("JWT_ACCESS_EXPIRY") * 60,    // Convert minutes to seconds
 		RefreshMaxAge: getEnvInt("JWT_REFRESH_EXPIRY") * 3600, // Convert hours to seconds
 	}
 
 	return &Config{
-		App:       &app,
-		Postgres:  &postgres,
-		Defaults:  &defaults,
-		JWT:       &jwt,
+		App:      &app,
+		Postgres: &postgres,
+		Defaults: &defaults,
+		JWT:      &jwt,
 	}
 }
 
@@ -121,4 +128,16 @@ func getEnvBool(key string) bool {
 	if err != nil { log.Fatalf("Environment variable '%s' must be 'true' or 'false'. Got: '%s'", key, strValue) }
 
 	return value
+}
+
+func getEnvList(key string) []string {
+	values := strings.Split(getEnv(key), ",")
+	result := make([]string, 0, len(values))
+	for _, value := range values {
+		value = strings.TrimSpace(value);
+		if value != "" { result = append(result, value)	}
+	}
+
+	if len(result) == 0 { log.Fatalf("Environment variable '%s' must contain at least one value.", key) }
+	return result
 }

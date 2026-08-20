@@ -1,6 +1,5 @@
-package model
+package dto
 
-// DTOs
 // Auth Request
 type AuthRequest struct {
 	EmployeeID  uint    `json:"employee_id" binding:"required"`
@@ -12,12 +11,4 @@ type AuthRequest struct {
 type TokenResponse struct {
 	Access  string `json:"access,omitempty"`
 	Refresh string `json:"refresh,omitempty"`
-}
-
-// Create Token response
-func CreateTokenResponse(accessToken, refreshToken string) TokenResponse {
-	return TokenResponse{
-		Access:  accessToken,
-		Refresh: refreshToken,
-	}
 }

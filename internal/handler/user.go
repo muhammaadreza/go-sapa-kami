@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"go-sapa-kami/internal/model"
+	"go-sapa-kami/internal/dto"
 	"go-sapa-kami/internal/utils"
 	"go-sapa-kami/internal/service"
 	"go-sapa-kami/internal/apperror"
@@ -17,20 +17,20 @@ type UserHandler struct {
 }
 
 func NewUserHandler(service service.UserService) *UserHandler {
-	return &UserHandler{ service }
+	return &UserHandler{service}
 }
 
 // Create a New User
 func (h *UserHandler) Create(c *gin.Context) {
-	var request model.UserRequest
-	err := c.ShouldBindJSON(&request);
+	var request dto.UserRequest
+	err := c.ShouldBindJSON(&request)
 	if err != nil { c.Error(apperror.ErrBadRequest("Invalid request body")); return }
 
 	ctx := c.Request.Context()
 	user, err := h.service.Create(ctx, &request)
 	if err != nil { c.Error(err); return }
 
-	c.JSON(200, model.Response{
+	c.JSON(200, dto.Response{
 		Success: true,
 		Message: "User created successfully",
 		Data:    user,
@@ -39,8 +39,8 @@ func (h *UserHandler) Create(c *gin.Context) {
 
 // Update an Existing User
 func (h *UserHandler) Update(c *gin.Context) {
-	var request model.UserRequest
-	err := c.ShouldBindJSON(&request);
+	var request dto.UserRequest
+	err := c.ShouldBindJSON(&request)
 	if err != nil { c.Error(apperror.ErrBadRequest("Invalid request body")); return }
 
 	param := c.Param("id")
@@ -54,7 +54,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 	user, err := h.service.Update(ctx, userID, &request)
 	if err != nil { c.Error(err); return }
 
-	c.JSON(200, model.Response{
+	c.JSON(200, dto.Response{
 		Success: true,
 		Message: "User updated successfully",
 		Data:    user,
@@ -74,7 +74,7 @@ func (h *UserHandler) Delete(c *gin.Context) {
 	err = h.service.Delete(ctx, userID)
 	if err != nil { c.Error(err); return }
 
-	c.JSON(200, model.Response{
+	c.JSON(200, dto.Response{
 		Success: true,
 		Message: "User deleted successfully",
 	})
@@ -82,15 +82,15 @@ func (h *UserHandler) Delete(c *gin.Context) {
 
 // Get All Users
 func (h *UserHandler) GetAll(c *gin.Context) {
-	var filter model.UserFilterRequest
-	err := c.ShouldBindQuery(&filter);
+	var filter dto.UserFilterRequest
+	err := c.ShouldBindQuery(&filter)
 	if err != nil { c.Error(apperror.ErrBadRequest("Invalid query parameters")); return }
 
 	ctx := c.Request.Context()
-	users, pagination, err := h.service.GetAll(ctx, filter)
+	users, pagination, err := h.service.GetAll(ctx, &filter)
 	if err != nil { c.Error(err); return }
 
-	c.JSON(200, model.Response{
+	c.JSON(200, dto.Response{
 		Success:    true,
 		Message:    "Users retrieved successfully",
 		Data:       users,
@@ -108,7 +108,7 @@ func (h *UserHandler) GetByID(c *gin.Context) {
 	user, err := h.service.GetByID(ctx, userID)
 	if err != nil { c.Error(err); return }
 
-	c.JSON(200, model.Response{
+	c.JSON(200, dto.Response{
 		Success: true,
 		Message: "User retrieved successfully",
 		Data:    user,
@@ -122,7 +122,7 @@ func (h *UserHandler) GetBySession(c *gin.Context) {
 	user, err := h.service.GetByID(ctx, userID)
 	if err != nil { c.Error(err); return }
 
-	c.JSON(200, model.Response{
+	c.JSON(200, dto.Response{
 		Success: true,
 		Message: "User retrieved successfully",
 		Data:    user,
@@ -149,7 +149,7 @@ func (h *UserHandler) Import(c *gin.Context) {
 	users, err := h.service.Import(ctx, excel)
 	if err != nil { c.Error(err); return }
 
-	c.JSON(200, model.Response{
+	c.JSON(200, dto.Response{
 		Success: true,
 		Message: "Users imported successfully",
 		Data:    users,
@@ -158,21 +158,22 @@ func (h *UserHandler) Import(c *gin.Context) {
 
 // Export Users to Excel
 func (h *UserHandler) Export(c *gin.Context) {
-	var filter model.UserFilterRequest
-	err := c.ShouldBindQuery(&filter);
+	var filter dto.UserFilterRequest
+	err := c.ShouldBindQuery(&filter)
 	if err != nil { c.Error(apperror.ErrBadRequest("Invalid query parameters")); return }
 
 	ctx := c.Request.Context()
-	excel, err := h.service.Export(ctx, filter)
+	excel, err := h.service.Export(ctx, &filter)
 	if err != nil { c.Error(err); return }
 
 	now := time.Now().Format("2006-01-02_150405")
 	filename := fmt.Sprintf("Export Users_%s.xlsx", now)
-    c.Header("Content-Disposition", "attachment; filename=" + filename)
-    c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    c.Data(200, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excel.Bytes())
+	c.Header("Content-Disposition", "attachment; filename="+filename)
+	c.Header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	c.Data(200, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", excel.Bytes())
 }
 
+// Reset User Password to Default
 func (h *UserHandler) ResetPassword(c *gin.Context) {
 	param := c.Param("id")
 	userID, err := utils.StringToUint(param)
@@ -185,7 +186,7 @@ func (h *UserHandler) ResetPassword(c *gin.Context) {
 	response, err := h.service.ResetPassword(ctx, userID)
 	if err != nil { c.Error(err); return }
 
-	c.JSON(200, model.Response{
+	c.JSON(200, dto.Response{
 		Success: true,
 		Message: "User password reset successfully",
 		Data:    response,

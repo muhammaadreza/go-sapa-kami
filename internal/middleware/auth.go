@@ -18,7 +18,7 @@ func Authentication(jwt *config.JWT) gin.HandlerFunc {
 			return
 		}
 
-		claims, err := utils.ValidateAccessToken(token, jwt.Secret)
+		claims, err := utils.ValidateAccessToken(token, jwt.Secret, jwt.Issuer)
 		if err != nil {
 			c.Error(apperror.ErrUnauthorized("Invalid or expired token"))
 			c.Abort()
@@ -31,21 +31,29 @@ func Authentication(jwt *config.JWT) gin.HandlerFunc {
 	}
 }
 
-func Authorization(permission model.RoleEnum) gin.HandlerFunc {
+func RequireRoles(allowedRoles ...model.RoleEnum) gin.HandlerFunc {
+	allowed := make(map[model.RoleEnum]struct{}, len(allowedRoles))
+	for _, role := range allowedRoles { allowed[role] = struct{}{} }
+
 	return func(ctx *gin.Context) {
-		role, ok := ctx.Get("userRole")
-        if !ok {
-            ctx.Error(apperror.ErrForbidden("Role not found in token"))
-            ctx.Abort()
-            return
-        }
+		value, ok := ctx.Get("userRole")
+		if !ok {
+			ctx.Error(apperror.ErrForbidden("Role not found in token"))
+			ctx.Abort()
+			return
+		}
 
-		if role == model.RoleSuperAdmin || role == permission {
-            ctx.Next()
-            return
-        }
+		role, ok := value.(model.RoleEnum)
+		if !ok {
+			ctx.Error(apperror.ErrForbidden("Invalid role in token"))
+			ctx.Abort()
+			return
+		}
 
-        ctx.Error(apperror.ErrForbidden("You don't have permission to access this resource"))
-        ctx.Abort()
+		_, ok = allowed[role];
+		if ok { ctx.Next(); return }
+
+		ctx.Error(apperror.ErrForbidden("You don't have permission to access this resource"))
+		ctx.Abort()
 	}
 }

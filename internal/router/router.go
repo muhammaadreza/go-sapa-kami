@@ -10,17 +10,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Setup(handler *handler.Handlers, jwt *config.JWT) *gin.Engine {
+func Setup(handlers *handler.Handlers, app *config.App, jwt *config.JWT) *gin.Engine {
 	r := gin.Default()
-	r.Use(middleware.CORS("*"))
+	r.Use(middleware.CORS(app.AllowedOrigins))
+	r.Use(middleware.CSRF(app.AllowedOrigins))
 	r.Use(middleware.Errors())
+	r.Static("/uploads", "./uploads")
 
 	api := r.Group("/api")
 	{
 		auth := api.Group("/auth")
 		{
-			auth.POST("/login", handler.Auth.Login)
-			auth.GET("/refresh", handler.Auth.RefreshToken)
+			auth.POST("/login", handlers.Auth.Login)
+			auth.POST("/refresh", handlers.Auth.RefreshToken)
 		}
 
 		protect := api.Group("")
@@ -28,47 +30,51 @@ func Setup(handler *handler.Handlers, jwt *config.JWT) *gin.Engine {
 		{
 			session := protect.Group("/session")
 			{
-				session.GET("", handler.User.GetBySession)
-				session.POST("/logout", handler.Auth.Logout)
+				session.GET("", handlers.User.GetBySession)
+				session.POST("/logout", handlers.Auth.Logout)
 			}
 
-			message := protect.Group("/message")
+			aspiration := protect.Group("/aspiration")
 			{
-				message.POST("", handler.Message.Create)
-				message.GET("", handler.Message.GetAllBySession)
+				aspiration.POST("", handlers.Aspiration.Create)
+				aspiration.GET("", handlers.Aspiration.GetAllBySession)
+				aspiration.GET("/:id", handlers.Aspiration.GetByID)
+				aspiration.POST("/:id/close", handlers.Aspiration.Close)
+				aspiration.POST("/:id/vote", handlers.Aspiration.Vote)
+				aspiration.POST("/:id/discussion", handlers.Aspiration.Discussion)
+				aspiration.GET("/:id/stream", handlers.Aspiration.Stream)
 			}
 
 			admin := protect.Group("/admin")
-			admin.Use(middleware.Authorization(model.RoleAdmin))
+			admin.Use(middleware.RequireRoles(model.RoleAdmin, model.RoleSuperAdmin))
 			{
-				admin.GET("/dashboard", handler.Dashboard.GetDashboard)
-				message := admin.Group("/message")
+				admin.GET("/dashboard", handlers.Dashboard.GetDashboard)
+				aspiration := admin.Group("/aspiration")
 				{
-					message.GET("", handler.Message.GetAll)
-					message.GET("/:id", handler.Message.GetByID)
-					message.GET("/export", handler.Message.Export)
+					aspiration.GET("", handlers.Aspiration.GetAll)
+					aspiration.GET("/export", handlers.Aspiration.Export)
+					aspiration.GET("/:id", handlers.Aspiration.GetByID)
 				}
 			}
 
 			superadmin := protect.Group("/admin")
-			superadmin.Use(middleware.Authorization(model.RoleSuperAdmin))
+			superadmin.Use(middleware.RequireRoles(model.RoleSuperAdmin))
 			{
 				user := superadmin.Group("/user")
 				{
-					user.GET("", handler.User.GetAll)
-					user.GET("/:id", handler.User.GetByID)
-					user.POST("", handler.User.Create)
-					user.PUT("/:id", handler.User.Update)
-					user.DELETE("/:id", handler.User.Delete)
-
-					user.POST("/import", handler.User.Import)
-					user.GET("/export", handler.User.Export)
-					user.POST("/:id/reset", handler.User.ResetPassword)
+					user.GET("", handlers.User.GetAll)
+					user.POST("", handlers.User.Create)
+					user.POST("/import", handlers.User.Import)
+					user.GET("/export", handlers.User.Export)
+					user.GET("/:id", handlers.User.GetByID)
+					user.PUT("/:id", handlers.User.Update)
+					user.DELETE("/:id", handlers.User.Delete)
+					user.POST("/:id/reset", handlers.User.ResetPassword)
 				}
 
-				message := superadmin.Group("/message")
+				aspiration := superadmin.Group("/aspiration")
 				{
-					message.DELETE("/:id", handler.Message.Delete)
+					aspiration.DELETE("/:id", handlers.Aspiration.Delete)
 				}
 			}
 		}

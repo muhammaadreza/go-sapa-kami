@@ -4,9 +4,10 @@ import (
 	"errors"
 	"context"
 
-	"go-sapa-kami/internal/model"
+	"go-sapa-kami/internal/dto"
 	"go-sapa-kami/internal/utils"
 	"go-sapa-kami/internal/config"
+	"go-sapa-kami/internal/mapper"
 	"go-sapa-kami/internal/apperror"
 	"go-sapa-kami/internal/repository"
 
@@ -14,22 +15,22 @@ import (
 )
 
 type AuthService interface {
-	Login(ctx context.Context, request *model.AuthRequest) (*model.TokenResponse, error)
-	RefreshToken(ctx context.Context, refreshToken string) (*model.TokenResponse, error)
+	Login(ctx context.Context, request *dto.AuthRequest) (*dto.TokenResponse, error)
+	RefreshToken(ctx context.Context, refreshToken string) (*dto.TokenResponse, error)
 }
 
 type authService struct {
 	repository repository.UserRepository
 	Defaults   *config.Defaults
-	jwt 	   *config.JWT
+	jwt        *config.JWT
 }
 
 func NewAuthService(repository repository.UserRepository, defaults *config.Defaults, jwt *config.JWT) AuthService {
-	return &authService{ repository, defaults, jwt }
+	return &authService{repository, defaults, jwt}
 }
 
 // Login with Employee ID
-func (s *authService) Login(ctx context.Context, request *model.AuthRequest) (*model.TokenResponse, error) {
+func (s *authService) Login(ctx context.Context, request *dto.AuthRequest) (*dto.TokenResponse, error) {
 	user, err := s.repository.GetByEmployeeID(ctx, request.EmployeeID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) { return nil, apperror.ErrUnauthorized("invalid credentials") }
@@ -56,21 +57,24 @@ func (s *authService) Login(ctx context.Context, request *model.AuthRequest) (*m
 	refreshToken, err := utils.GenerateRefreshToken(user.ID, s.jwt.Secret, s.jwt.RefreshExpiry, s.jwt.Issuer)
 	if err != nil { return nil, apperror.ErrInternal("Failed to generate refresh token") }
 
-	response := model.CreateTokenResponse(accessToken, refreshToken)
+	response := mapper.ToTokenResponse(accessToken, refreshToken)
 	return &response, nil
 }
 
 // Refresh Access Token using Refresh Token
-func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*model.TokenResponse, error) {
-	claims, err := utils.ValidateRefreshToken(refreshToken, s.jwt.Secret)
+func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*dto.TokenResponse, error) {
+	claims, err := utils.ValidateRefreshToken(refreshToken, s.jwt.Secret, s.jwt.Issuer)
 	if err != nil { return nil, apperror.ErrUnauthorized("Invalid refresh token") }
 
 	user, err := s.repository.GetByID(ctx, claims.UserID)
 	if err != nil { return nil, apperror.ErrInternal("Failed to retrieve user") }
 
-	accessToken, err := utils.GenerateAccessToken(user.ID,  user.Role, s.jwt.Secret, s.jwt.AccessExpiry, s.jwt.Issuer)
+	accessToken, err := utils.GenerateAccessToken(user.ID, user.Role, s.jwt.Secret, s.jwt.AccessExpiry, s.jwt.Issuer)
 	if err != nil { return nil, apperror.ErrInternal("Failed to generate access token") }
 
-	response := model.CreateTokenResponse(accessToken, refreshToken)
+	rotatedRefreshToken, err := utils.GenerateRefreshToken(user.ID, s.jwt.Secret, s.jwt.RefreshExpiry, s.jwt.Issuer)
+	if err != nil { return nil, apperror.ErrInternal("Failed to generate refresh token") }
+
+	response := mapper.ToTokenResponse(accessToken, rotatedRefreshToken)
 	return &response, nil
 }

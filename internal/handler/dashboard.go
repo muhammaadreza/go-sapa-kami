@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"go-sapa-kami/internal/model"
+	"go-sapa-kami/internal/dto"
 	"go-sapa-kami/internal/service"
 
 	"github.com/gin-gonic/gin"
@@ -12,7 +12,7 @@ type DashboardHandler struct {
 }
 
 func NewDashboardHandler(service service.DashboardService) *DashboardHandler {
-	return &DashboardHandler{ service }
+	return &DashboardHandler{service}
 }
 
 // Get dashboard data
@@ -21,11 +21,9 @@ func (h *DashboardHandler) GetDashboard(c *gin.Context) {
 	response, err := h.service.GetDashboard(ctx)
 	if err != nil { c.Error(err); return }
 
-	c.JSON(200, model.Response{
+	c.JSON(200, dto.Response{
 		Success: true,
 		Message: "Dashboard data retrieved successfully",
 		Data:    response,
 	})
 }
-
-

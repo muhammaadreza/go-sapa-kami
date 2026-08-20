@@ -1,7 +1,9 @@
 package handler
 
 import (
-	"go-sapa-kami/internal/model"
+	"net/http"
+
+	"go-sapa-kami/internal/dto"
 	"go-sapa-kami/internal/config"
 	"go-sapa-kami/internal/service"
 	"go-sapa-kami/internal/apperror"
@@ -12,26 +14,26 @@ import (
 type AuthHandler struct {
 	service service.AuthService
 	app     *config.App
-	jwt	    *config.JWT
+	jwt     *config.JWT
 }
 
 func NewAuthHandler(service service.AuthService, config *config.Config) *AuthHandler {
-	return &AuthHandler{ service: service, app: config.App, jwt: config.JWT }
+	return &AuthHandler{service: service, app: config.App, jwt: config.JWT}
 }
 
 // Login
 func (h *AuthHandler) Login(c *gin.Context) {
-	var request model.AuthRequest
-	err := c.ShouldBindJSON(&request);
+	var request dto.AuthRequest
+	err := c.ShouldBindJSON(&request)
 	if err != nil { c.Error(apperror.ErrBadRequest("Invalid request")); return }
 
 	ctx := c.Request.Context()
 	token, err := h.service.Login(ctx, &request)
 	if err != nil { c.Error(err); return }
 
-	c.SetCookie("access_token", token.Access, h.jwt.AccessMaxAge, "/", h.app.Domain, false, true)
-	c.SetCookie("refresh_token", token.Refresh, h.jwt.RefreshMaxAge, "/", h.app.Domain, false, true)
-	c.JSON(200, model.Response{
+	h.setAuthCookie(c, "access_token", token.Access, h.jwt.AccessMaxAge)
+	h.setAuthCookie(c, "refresh_token", token.Refresh, h.jwt.RefreshMaxAge)
+	c.JSON(200, dto.Response{
 		Success: true,
 		Message: "Login successfully",
 		Data:    token,
@@ -47,8 +49,9 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	token, err := h.service.RefreshToken(ctx, refreshToken)
 	if err != nil { c.Error(err); return }
 
-	c.SetCookie("access_token", token.Access, h.jwt.AccessMaxAge, "/", h.app.Domain, false, true)
-	c.JSON(200, model.Response{
+	h.setAuthCookie(c, "access_token", token.Access, h.jwt.AccessMaxAge)
+	h.setAuthCookie(c, "refresh_token", token.Refresh, h.jwt.RefreshMaxAge)
+	c.JSON(200, dto.Response{
 		Success: true,
 		Message: "Token refreshed successfully",
 		Data:    token,
@@ -57,48 +60,24 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 
 // Logout user by clearing cookies
 func (h *AuthHandler) Logout(c *gin.Context) {
-	c.SetCookie("access_token", "", -1, "/", h.app.Domain, false, true)
-	c.SetCookie("refresh_token", "", -1, "/", h.app.Domain, false, true)
-	c.JSON(200, model.Response{
+	h.setAuthCookie(c, "access_token", "", -1)
+	h.setAuthCookie(c, "refresh_token", "", -1)
+	c.JSON(200, dto.Response{
 		Success: true,
 		Message: "Logged out successfully",
 		Data:    nil,
 	})
 }
 
-// Microsoft OAuth2 Handlers (draft)
-// Generate Login URL
-// func (h *AuthHandler) GenerateLoginURL(c *gin.Context) {
-// 	auth, err := h.service.GenerateLoginURL()
-// 	if err != nil { c.Error(err); return }
-
-// 	c.SetCookie("oauth_state", auth.State, 3600, "/", h.app.Domain, false, true)
-// 	c.JSON(200, model.Response{
-// 		Success: true,
-// 		Message: "Login URL generated successfully",
-// 		Data:    auth,
-// 	})
-// }
-
-// Exchange Code to Access and Refresh Tokens
-// func (h *AuthHandler) Callback(c *gin.Context) {
-// 	var callback model.AzureCallback
-// 	err := c.ShouldBindQuery(&callback);
-// 	if err != nil { c.Error(apperror.ErrBadRequest("Invalid request")); return }
-
-// 	state, err := c.Cookie("oauth_state")
-// 	c.SetCookie("oauth_state", "", -1, "/", h.app.Domain, false, true)
-// 	if err != nil || state != callback.State { c.Error(apperror.ErrUnauthorized("Invalid state parameter")); return }
-
-// 	ctx := c.Request.Context()
-// 	token, err := h.service.ExchangeToken(ctx, callback.Code)
-// 	if err != nil { c.Error(err); return }
-
-// 	c.SetCookie("access_token", token.Access, h.jwt.AccessMaxAge, "/", h.app.Domain, false, true)
-// 	c.SetCookie("refresh_token", token.Refresh, h.jwt.RefreshMaxAge, "/", h.app.Domain, false, true)
-// 	c.JSON(200, model.Response{
-// 		Success: true,
-// 		Message: "Login successfully",
-// 		Data:    token,
-// 	})
-// }
+func (h *AuthHandler) setAuthCookie(c *gin.Context, name, value string, maxAge int) {
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     name,
+		Value:    value,
+		Path:     "/",
+		Domain:   h.app.CookieDomain,
+		MaxAge:   maxAge,
+		Secure:   h.app.CookieSecure,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+	})
+}

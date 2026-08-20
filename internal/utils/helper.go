@@ -2,33 +2,44 @@ package utils
 
 import (
 	"strconv"
-	"crypto/rand"
-	"encoding/base64"
+	"golang.org/x/crypto/bcrypt"
 )
 
-// Converts a string to uint
+// Convert Functions
+// String to Uint
 func StringToUint(str string) (uint, error) {
 	value, err := strconv.ParseUint(str, 10, 32)
 	if err != nil { return 0, err }
-
 	return uint(value), nil
 }
 
-// Converts a uint to string
+// String to Int
+func StringToInt(str string) (int, error) {
+	value, err := strconv.Atoi(str)
+	if err != nil { return 0, err }
+	return value, nil
+}
+
+// Uint to String
 func UintToString(value uint) string {
 	return strconv.FormatUint(uint64(value), 10)
 }
 
-// Converts an int to string
+// Int to String
 func IntToString(value int) string {
 	return strconv.Itoa(value)
 }
 
-// Generate a random state string
-func GenerateState() (string, error) {
-	b := make([]byte, 32)
-	_, err := rand.Read(b)
+// Hashing Functions
+// Hash Password
+func HashPassword(password string) (string, error) {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	if err != nil { return "", err }
+	return string(hashed), nil
+}
 
-	return base64.URLEncoding.EncodeToString(b), nil
+// Check Password
+func CheckPassword(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }

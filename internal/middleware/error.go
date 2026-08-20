@@ -2,9 +2,10 @@ package middleware
 
 import (
 	"errors"
+	"log"
 
-	"go-sapa-kami/internal/model"
 	"go-sapa-kami/internal/apperror"
+	"go-sapa-kami/internal/dto"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +19,7 @@ func Errors() gin.HandlerFunc {
 
 			var appErr *apperror.AppError
 			if errors.As(err, &appErr) {
-				c.AbortWithStatusJSON(appErr.Code, model.Response{
+				c.AbortWithStatusJSON(appErr.Code, dto.Response{
 					Success: false,
 					Message: appErr.Message,
 					Detail:  appErr.Detail,
@@ -26,10 +27,10 @@ func Errors() gin.HandlerFunc {
 				return
 			}
 
-			c.AbortWithStatusJSON(500, model.Response{
+			log.Printf("unhandled error for %s %s: %v", c.Request.Method, c.Request.URL.Path, err)
+			c.AbortWithStatusJSON(500, dto.Response{
 				Success: false,
 				Message: "Internal Server Error",
-				Detail:  err.Error(),
 			})
 
 			return

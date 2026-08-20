@@ -5,6 +5,9 @@
 *.so
 *.dylib
 bin/
+api
+uploads/
+
 
 # Misc
 .DS_Store
