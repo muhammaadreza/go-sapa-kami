@@ -39,8 +39,8 @@ type Aspiration struct {
 	DiscussionCount int64 		 `gorm:"->;-:migration"`
 
 	Sender     	 	User         `gorm:"foreignKey:SenderID;constraint:OnDelete:CASCADE"`
-	Votes       	[]Vote       `gorm:"foreignKey:AspirationID"`
-	Discussions 	[]Discussion `gorm:"foreignKey:AspirationID"`
+	Votes       	[]Vote       `gorm:"foreignKey:AspirationID;constraint:OnDelete:CASCADE"`
+	Discussions 	[]Discussion `gorm:"foreignKey:AspirationID;constraint:OnDelete:CASCADE"`
 }
 
 // Vote Model
