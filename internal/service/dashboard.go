@@ -45,9 +45,11 @@ func (s *dashboardService) GetDashboard(ctx context.Context) (*dto.Dashboard, er
 
 	typeInnovation := model.TypeInnovation
 	typeCriticism := model.TypeCriticism
+	statusOpen := model.StatusOpen
 
 	var (
 		currTotalMsg, currTotalInn, currTotalCrit, currTotalUsers int64
+		currOpenMsg, currOpenInn, currOpenCrit                    int64
 		prevTotalMsg, prevTotalInn, prevTotalCrit, prevTotalUsers int64
 
 		allDailyMap        map[string]int64
@@ -67,6 +69,13 @@ func (s *dashboardService) GetDashboard(ctx context.Context) (*dto.Dashboard, er
 	})
 
 	group.Go(func() error {
+		filter := dto.AspirationFilterRequest{Status: &statusOpen, StartDate: &currStartStr, EndDate: &currEndStr}
+		count, err := s.messages.Count(groupCtx, &filter)
+		currOpenMsg = count
+		return err
+	})
+
+	group.Go(func() error {
 		filter := dto.AspirationFilterRequest{Type: &typeInnovation, StartDate: &currStartStr, EndDate: &currEndStr}
 		count, err := s.messages.Count(groupCtx, &filter)
 		currTotalInn = count
@@ -74,9 +83,23 @@ func (s *dashboardService) GetDashboard(ctx context.Context) (*dto.Dashboard, er
 	})
 
 	group.Go(func() error {
+		filter := dto.AspirationFilterRequest{Type: &typeInnovation, Status: &statusOpen, StartDate: &currStartStr, EndDate: &currEndStr}
+		count, err := s.messages.Count(groupCtx, &filter)
+		currOpenInn = count
+		return err
+	})
+
+	group.Go(func() error {
 		filter := dto.AspirationFilterRequest{Type: &typeCriticism, StartDate: &currStartStr, EndDate: &currEndStr}
 		count, err := s.messages.Count(groupCtx, &filter)
 		currTotalCrit = count
+		return err
+	})
+
+	group.Go(func() error {
+		filter := dto.AspirationFilterRequest{Type: &typeCriticism, Status: &statusOpen, StartDate: &currStartStr, EndDate: &currEndStr}
+		count, err := s.messages.Count(groupCtx, &filter)
+		currOpenCrit = count
 		return err
 	})
 
@@ -176,16 +199,19 @@ func (s *dashboardService) GetDashboard(ctx context.Context) (*dto.Dashboard, er
 		KPIs: dto.KPIs{
 			Aspirations: dto.KPI{
 				Total:      currTotalMsg,
+				Open:       currOpenMsg,
 				Percentage: calculatePercentage(currTotalMsg, prevTotalMsg),
 				Sparkline:  allSparkline,
 			},
 			Innovations: dto.KPI{
 				Total:      currTotalInn,
+				Open:       currOpenInn,
 				Percentage: calculatePercentage(currTotalInn, prevTotalInn),
 				Sparkline:  innovationSparkline,
 			},
 			Critisms: dto.KPI{
 				Total:      currTotalCrit,
+				Open:       currOpenCrit,
 				Percentage: calculatePercentage(currTotalCrit, prevTotalCrit),
 				Sparkline:  criticismSparkline,
 			},

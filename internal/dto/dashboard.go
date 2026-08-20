@@ -18,6 +18,7 @@ type KPIs struct {
 // KPI Nested
 type KPI struct {
 	Total      int64   `json:"total"`
+	Open       int64   `json:"open"`
 	Percentage int64   `json:"percentage"`
 	Sparkline  []int64 `json:"sparkline"`
 }
