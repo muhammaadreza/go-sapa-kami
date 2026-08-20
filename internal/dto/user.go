@@ -21,14 +21,14 @@ type UserResponse struct {
 
 // User Filter Request
 type UserFilterRequest struct {
-	Query     *string         `json:"query" binding:"omitempty"`
-	StartDate *string         `json:"start_date" binding:"omitempty,datetime=2006-01-02"`
-	EndDate   *string         `json:"end_date" binding:"omitempty,datetime=2006-01-02"`
-	Role      *model.RoleEnum `json:"role" binding:"omitempty,oneof=user admin super_admin"`
-	Limit     int             `json:"limit" binding:"omitempty,min=1,max=100"`
-	Page      int             `json:"page" binding:"omitempty,min=1"`
+	Query     *string         `form:"query" binding:"omitempty"`
+	StartDate *string         `form:"start_date" binding:"omitempty,datetime=2006-01-02"`
+	EndDate   *string         `form:"end_date" binding:"omitempty,datetime=2006-01-02"`
+	Role      *model.RoleEnum `form:"role" binding:"omitempty,oneof=user admin super_admin"`
+	Limit     int             `form:"limit" binding:"omitempty,min=1,max=100"`
+	Page      int             `form:"page" binding:"omitempty,min=1"`
 
-	SortKey   *string `json:"sort_key" binding:"omitempty,oneof=id employee_id name role created_at updated_at"`
-	SortOrder *string `json:"sort_order" binding:"omitempty,oneof=asc desc"`
+	SortKey   *string `form:"sort_key" binding:"omitempty,oneof=id employee_id name role created_at updated_at"`
+	SortOrder *string `form:"sort_order" binding:"omitempty,oneof=asc desc"`
 }
 
