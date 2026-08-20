@@ -12,7 +12,7 @@ import (
 )
 
 func PostgresConfig(cfg *Postgres, defaults *Defaults) *gorm.DB {
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta",
 		cfg.Host, cfg.User, cfg.Password, cfg.DBName, cfg.Port)
 
 	gormConfig := &gorm.Config{TranslateError: true}

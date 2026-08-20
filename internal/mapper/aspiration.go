@@ -72,12 +72,6 @@ func ToAspirationResponse(aspiration *model.Aspiration, sessionID uint, sessionR
 		}
 	}
 
-	var expiredAt *string
-	if aspiration.ExpiredAt != nil {
-		strExpired := aspiration.ExpiredAt.Format("2006-01-02 15:04:05")
-		expiredAt = &strExpired
-	}
-
 	return dto.AspirationResponse{
 		ID:              aspiration.ID,
 		Type:            aspiration.Type,
@@ -90,8 +84,8 @@ func ToAspirationResponse(aspiration *model.Aspiration, sessionID uint, sessionR
 		Discussions:     discussions,
 		DiscussionCount: aspiration.DiscussionCount,
 		UserVote:        userVote,
-		CreatedAt:       aspiration.CreatedAt.Format("2006-01-02 15:04:05"),
-		ExpiredAt:       expiredAt,
+		CreatedAt:       aspiration.CreatedAt,
+		ExpiredAt:       aspiration.ExpiredAt,
 	}
 }
 
@@ -103,7 +97,7 @@ func ToVoteResponse(vote *model.Vote) dto.VoteResponse {
 		ID:        vote.ID,
 		Voter:     &voter,
 		Value:     vote.Value,
-		CreatedAt: vote.CreatedAt.Format("2006-01-02 15:04:05"),
+		CreatedAt: vote.CreatedAt,
 	}
 }
 
@@ -129,7 +123,7 @@ func ToDiscussionResponse(aspiration *model.Aspiration, sessionID uint, sessionR
 		Attachments: discussion.Attachments,
 		IsYou:       isYou,
 		IsSender:    isSender,
-		CreatedAt:   discussion.CreatedAt.Format("2006-01-02 15:04:05"),
+		CreatedAt:   discussion.CreatedAt,
 	}
 }
 

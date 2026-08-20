@@ -1,9 +1,10 @@
 package dto
 
 import (
-	"go-sapa-kami/internal/model"
-
 	"mime/multipart"
+	"time"
+
+	"go-sapa-kami/internal/model"
 )
 
 // Aspiration Request
@@ -38,8 +39,8 @@ type AspirationResponse struct {
 	DiscussionCount int64                `json:"discussion_count"`
 	Discussions     []DiscussionResponse `json:"discussions,omitempty"`
 	UserVote        *model.VoteEnum      `json:"user_vote,omitempty"`
-	CreatedAt       string               `json:"created_at"`
-	ExpiredAt       *string              `json:"expired_at,omitempty"`
+	CreatedAt       time.Time            `json:"created_at"`
+	ExpiredAt       *time.Time           `json:"expired_at,omitempty"`
 }
 
 // Vote Response
@@ -47,7 +48,7 @@ type VoteResponse struct {
 	ID        uint           `json:"id"`
 	Voter     *UserResponse  `json:"voter,omitempty"`
 	Value     model.VoteEnum `json:"value"`
-	CreatedAt string         `json:"created_at"`
+	CreatedAt time.Time      `json:"created_at"`
 }
 
 // Discussion Response
@@ -58,7 +59,7 @@ type DiscussionResponse struct {
 	Attachments model.Attachments `json:"attachments,omitempty"`
 	IsYou       bool              `json:"is_you"`
 	IsSender    bool              `json:"is_sender"`
-	CreatedAt   string            `json:"created_at"`
+	CreatedAt   time.Time         `json:"created_at"`
 }
 
 // Vote Count Response

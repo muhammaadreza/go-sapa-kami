@@ -1,6 +1,10 @@
 package dto
 
-import "go-sapa-kami/internal/model"
+import (
+	"time"
+
+	"go-sapa-kami/internal/model"
+)
 
 // User Request
 type UserRequest struct {
@@ -15,8 +19,8 @@ type UserResponse struct {
 	EmployeeID uint           `json:"employee_id,omitempty"`
 	Name       string         `json:"name,omitempty"`
 	Role       model.RoleEnum `json:"role,omitempty"`
-	CreatedAt  string         `json:"created_at,omitempty"`
-	UpdatedAt  string         `json:"updated_at,omitempty"`
+	CreatedAt  *time.Time     `json:"created_at,omitempty"`
+	UpdatedAt  *time.Time     `json:"updated_at,omitempty"`
 }
 
 // User Filter Request

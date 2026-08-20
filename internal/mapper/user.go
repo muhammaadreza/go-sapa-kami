@@ -32,8 +32,8 @@ func ToUserResponse(user *model.User) dto.UserResponse {
 		EmployeeID: user.EmployeeID,
 		Name:       user.Name,
 		Role:       user.Role,
-		CreatedAt:  user.CreatedAt.Format("2006-01-02 15:04:05"),
-		UpdatedAt:  user.UpdatedAt.Format("2006-01-02 15:04:05"),
+		CreatedAt:  &user.CreatedAt,
+		UpdatedAt:  &user.UpdatedAt,
 	}
 }
 
