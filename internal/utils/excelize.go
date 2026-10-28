@@ -42,7 +42,7 @@ var (
 		TableName: "TableCriticism",
 		Columns: []Column{
 			{Header: "Subject", Width: 50, Align: "left"},
-			{Header: "Body", Width: 150, Align: "left"},
+			{Header: "Isi", Width: 150, Align: "left"},
 			{Header: "Created At", Width: 20, Align: "center"},
 		},
 	}
@@ -54,7 +54,7 @@ var (
 			{Header: "Employee ID", Width: 20, Align: "center"},
 			{Header: "Name", Width: 30, Align: "left"},
 			{Header: "Subject", Width: 50, Align: "left"},
-			{Header: "Body", Width: 150, Align: "left"},
+			{Header: "Isi", Width: 150, Align: "left"},
 			{Header: "Created At", Width: 20, Align: "center"},
 		},
 	}

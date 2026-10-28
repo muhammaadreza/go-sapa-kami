@@ -11,7 +11,7 @@ import (
 func ToAspirationModel(senderID uint, request *dto.AspirationRequest, attachments model.Attachments) model.Aspiration {
 	var expiredAt *time.Time
 	if request.Type == model.TypeInnovation {
-		expTime := time.Now().AddDate(0, 0, 14)
+		expTime := time.Now().AddDate(1, 0, 0) // Set expiredAt to 1 year from now
 		expMidnight := time.Date(expTime.Year(), expTime.Month(), expTime.Day(), 0, 0, 0, 0, expTime.Location())
 		expiredAt = &expMidnight
 	}
